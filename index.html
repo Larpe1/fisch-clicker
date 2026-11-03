@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fisch Clicker v1.9</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#071522;color:#eaf6ff;font-family:Arial,sans-serif}
+header{padding:18px;text-align:center;background:#0b2235;border-bottom:1px solid #21435b}
+h1{margin:0 0 6px}.ver{opacity:.65;font-size:13px}
+nav{display:flex;gap:7px;overflow:auto;padding:10px;background:#081a29;position:sticky;top:0;z-index:3}
+nav button{white-space:nowrap;border:0;border-radius:10px;padding:10px 13px;background:#12334a;color:white}
+nav button.active{background:#1d7db2}.page{display:none;padding:14px;max-width:1000px;margin:auto}.page.active{display:block}
+.card{background:#0d2639;border:1px solid #1e435d;border-radius:15px;padding:14px;margin:10px 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#091d2d;border-radius:12px;padding:12px;text-align:center}
+button.action{border:0;border-radius:12px;padding:12px 16px;background:#1d8bd0;color:white;font-weight:bold}
+button.action:disabled{opacity:.45}.fish{font-size:60px;text-align:center;cursor:pointer;user-select:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.card h2{margin-top:0}
+.item{background:#0b2030;border-radius:13px;padding:10px;text-align:center;border:1px solid #1c3b51}
+.item img{width:100%;height:105px;object-fit:contain;border-radius:10px;background:#071522}
+.small{font-size:12px;opacity:.7}.locked{opacity:.45}.selected{outline:2px solid #2ba9ef}
+.mega-notice{position:sticky;top:0;z-index:30;margin:0 0 12px;padding:11px 14px;border:1px solid #1e78ad;border-radius:12px;background:#0d2639;color:#eaf7ff;text-align:center}.mega-notice[hidden]{display:none}
+.page h2{margin-top:4px}
+.notice{padding:10px 12px;border-radius:12px;background:#12344a;border:1px solid #276487;margin:10px 0}
+.progress{height:10px;background:#071522;border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:#1d8bd0}
+.item button{margin:3px}
+</style>
+</head>
+
+<body>
+<header><h1>🎣 Fisch Clicker</h1><div class="ver">v1.9 • новые системы • сохранение прогресса</div></header>
+<nav>
+<button data-page="fish">🎣 Рыбалка</button><button data-page="islands">🗺️ Острова</button>
+<button data-page="rods">🎣 Удочки</button><button data-page="bots">🤖 Боты</button>
+<button data-page="index">🐟 Индекс</button><button data-page="mutations">✨ Мутации</button>
+<button data-page="badges">🏆 Бейджи</button><button data-page="weather">🌦️ Погода</button>
+<button data-page="enchant">🔮 Зачарования</button><button data-page="quests">📜 Задания</button>
+<button data-page="boats">🚤 Лодки</button><button data-page="bait">🪱 Наживки</button>
+<button data-page="events">🦈 События</button><button data-page="prestige">🌟 Престиж</button>
+</nav>
+<section id="fish" class="page active">
+<div class="stats">
+<div class="stat">💰 <b id="money">0</b><br><span class="small">C$</span></div>
+<div class="stat">⭐ <b id="level">1</b><br><span class="small">уровень</span></div>
+<div class="stat">🐟 <b id="caught">0</b><br><span class="small">рыб</span></div>
+</div>
+<div class="card"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Опыт уровня</span><span id="xpText">0 XP</span></div><div class="progress"><i id="xpBar" style="width:0%"></i></div></div>
+<div id="megaNotice" class="notice" style="display:none;text-align:center">🦈 <b>МЕГАЛОДОН ПОЯВИЛСЯ!</b><br><span id="megaTimer"></span></div>
+<div class="card"><h2 id="placeTitle">Moosewood</h2><p id="placeDesc">Начальная локация.</p>
+<div class="fish" onclick="fish()">🐟</div><button class="action" onclick="fish()">Забросить удочку</button>
+<p id="result">Нажми на рыбу или кнопку.</p><p class="small" id="weatherLine"></p><p class="small" id="baitLine"></p>
+</div>
+</section>
+<section id="islands" class="page"><h2>🗺️ Локации</h2><div id="islandGrid" class="grid"></div></section>
+<section id="rods" class="page"><h2>🎣 Удочки</h2><div id="rodGrid" class="grid"></div></section>
+<section id="bots" class="page"><h2>🤖 Боты</h2><div id="botGrid"></div></section>
+<section id="index" class="page"><h2>🐟 Полная коллекция рыб</h2><p id="collectionProgress"></p><div id="fishGrid" class="grid"></div></section>
+<section id="mutations" class="page"><h2>✨ Мутации и редкости</h2><div id="mutationGrid" class="grid"></div><h2>💎 Редкости</h2><div id="rarityGrid" class="grid"></div></section>
+<section id="badges" class="page"><h2>🏆 Бейджи</h2><div id="badgeGrid"></div></section>
+<section id="weather" class="page"><h2>🌦️ Погодные события</h2><div id="weatherCard" class="card"></div></section>
+<section id="enchant" class="page"><h2>🔮 Зачарования удочек</h2><p>Зачарование действует на экипированную удочку.</p><div id="enchantCard" class="card"></div></section>
+<section id="quests" class="page"><h2>📜 Ежедневные задания</h2><p class="small">Задания обновляются раз в сутки. Награда выдаётся один раз.</p><div id="questGrid" class="grid"></div></section>
+<section id="boats" class="page"><h2>🚤 Лодки</h2><p class="small">Лодки дают бонус к доходу и помогают открывать путешествия.</p><div id="boatGrid" class="grid"></div></section>
+<section id="bait" class="page"><h2>🪱 Магазин наживок</h2><div id="baitGrid" class="grid"></div></section>
+<section id="events" class="page"><h2>🦈 Боссы и события</h2><div id="eventCard" class="card"></div></section>
+<section id="prestige" class="page"><h2>🌟 Престиж</h2><div id="prestigeCard" class="card"></div></section>
+<script>
+const islands=[
+["Moosewood",1,"Стартовый остров"],["Roslit Bay",5,"Тропический залив"],["Sunstone Island",10,"Солнечный остров"],
+["Terrapin Island",15,"Остров черепахи"],["Mushgrove Swamp",20,"Большое болото"],["Snowcap Island",25,"Заснеженный остров"],
+["Forsaken Shores",30,"Затерянные берега"],["Ancient Isle",35,"Древний остров"],["Vertigo",40,"Таинственная подводная локация"],
+["The Depths",45,"Глубины"],["Desolate Deep",50,"Пустынные глубины"],["Brine Pool",55,"Скрытый солёный бассейн"],
+["Keeper's Altar",60,"Алтарь хранителя"],["Atlantis",65,"Затерянный город Атлантиды"]
+];
+
+const fishData=[
+["Anchovy","Moosewood",20,1,"Common"],["Bream","Moosewood",28,1,"Common"],["Carp","Moosewood",35,1,"Common"],["Red Snapper","Moosewood",45,1,"Uncommon"],["Goldfish","Moosewood",55,1,"Uncommon"],["Trout","Moosewood",70,2,"Uncommon"],["Bass","Moosewood",80,2,"Common"],["Cod","Moosewood",90,3,"Rare"],
+["Chub","Roslit Bay",45,5,"Common"],["Minnow","Roslit Bay",55,5,"Common"],["Perch","Roslit Bay",65,5,"Uncommon"],["Clownfish","Roslit Bay",100,10,"Rare"],["Arapaima","Roslit Bay",180,10,"Epic"],["Axolotl","Roslit Bay",300,15,"Legendary"],["Pufferfish","Roslit Bay",220,12,"Rare"],["Parrotfish","Roslit Bay",260,12,"Epic"],
+["Sunfish","Sunstone Island",170,10,"Uncommon"],["Mackerel","Sunstone Island",190,12,"Uncommon"],["Yellowfin Tuna","Sunstone Island",260,15,"Rare"],["Swordfish","Sunstone Island",500,20,"Epic"],["Blue Tang","Sunstone Island",230,15,"Rare"],
+["Sea Turtle","Terrapin Island",450,15,"Epic"],["Flounder","Terrapin Island",170,15,"Uncommon"],["Halibut","Terrapin Island",280,18,"Rare"],["Lionfish","Terrapin Island",330,20,"Epic"],
+["Eel","Mushgrove Swamp",110,20,"Uncommon"],["Pike","Mushgrove Swamp",150,20,"Rare"],["Mushgrove Alligator","Mushgrove Swamp",500,25,"Legendary"],["Swamp Bass","Mushgrove Swamp",260,22,"Rare"],
+["Snowflake Smelt","Snowcap Island",130,25,"Uncommon"],["Icefish","Snowcap Island",240,28,"Rare"],["Glacierfish","Snowcap Island",600,35,"Legendary"],["Penguin","Snowcap Island",350,30,"Epic"],
+["Captain's Goldfish","Forsaken Shores",400,30,"Epic"],["Pirate Perch","Forsaken Shores",330,32,"Rare"],["Treasure Fish","Forsaken Shores",700,35,"Legendary"],
+["Ancient Crab","Ancient Isle",500,35,"Epic"],["Ancient Serpent","Ancient Isle",1500,40,"Mythical"],["Fossil Fish","Ancient Isle",800,38,"Legendary"],["Mosasaurus","Ancient Isle",2500,45,"Mythical"],
+["Twilight Ray","Vertigo",650,40,"Epic"],["Abyssal Fish","Vertigo",900,42,"Legendary"],["Voidfish","Vertigo",1300,45,"Mythical"],
+["Deep Sea Bass","The Depths",700,45,"Epic"],["Depths Squid","The Depths",1200,48,"Legendary"],["Abyssal Shark","The Depths",2000,50,"Mythical"],
+["Desolate Eel","Desolate Deep",800,50,"Epic"],["Sand Dollar Fish","Desolate Deep",1000,52,"Legendary"],["Deep Scorpionfish","Desolate Deep",1500,55,"Mythical"],
+["Brine Shrimp","Brine Pool",900,55,"Epic"],["Brine Serpent","Brine Pool",1800,58,"Mythical"],["Saltwater Dragon","Brine Pool",3000,60,"Mythical"],
+["Keeper's Ray","Keeper's Altar",2200,60,"Legendary"],["Keeper's Guardian","Keeper's Altar",3500,65,"Mythical"],
+["Atlantis Grouper","Atlantis",2500,65,"Legendary"],["Atlantean Tuna","Atlantis",4000,68,"Mythical"],["Leviathan","Atlantis",8000,70,"Secret"]
+];
+
+const rods=[
+["Flimsy Rod",1,0,1],["Training Rod",1,100,1.05],["Plastic Rod",3,250,1.1],["Carbon Rod",5,500,1.15],
+["Steady Rod",10,1500,1.3],["Lucky Rod",15,5000,1.5],["Long Rod",18,7500,1.6],["Magnet Rod",20,9000,1.7],
+["Rapid Rod",25,15000,2],["Mythical Rod",30,25000,2.3],["Midas Rod",32,35000,2.5],["King's Rod",35,50000,2.8],
+["Trident Rod",40,75000,3],["Rod of the Depths",45,100000,3.4],["Heaven's Rod",50,150000,4],
+["No-Life Rod",55,250000,4.5],["Poseidon Rod",60,400000,5],["Challenger's Rod",65,650000,5.8]
+];
+
+const bots=[
+["Basic Fisher Bot",500,10,35],["Fast Fisher Bot",3000,7,70],["Pro Fisher Bot",12000,5,120],
+["Elite Fisher Bot",40000,3,220],["Legendary Fisher Bot",150000,2,400]
+];
+
+const mutations=[
+["Normal",1,55],["Glossy",1.6,12],["Silver",1.8,8],["Shiny",1.85,5],["Sparkling",1.85,5],
+["Midas",2.5,3],["Mythical",5.5,1.5],["Abyssal",5.5,1],["Rainbow",6,.8],["Nova",6,.5]
+];
+
+const rarityInfo={
+"Common":{xp:20,value:1},
+"Uncommon":{xp:35,value:1.15},
+"Rare":{xp:60,value:1.35},
+"Epic":{xp:100,value:1.7},
+"Legendary":{xp:180,value:2.2},
+"Mythical":{xp:300,value:3},
+"Secret":{xp:600,value:5}
+};
+const rarityNames=["Common","Uncommon","Rare","Epic","Legendary","Mythical","Secret"];
+
+const badges=[["Первый улов",1],["10 рыб",10],["50 рыб",50],["100 рыб",100],["500 рыб",500],["Исследователь",8],["Коллекционер",15]];
+
+
+const QUESTS=[["Поймать 10 рыб",10,150],["Поймать 3 редкие или лучше",3,250],["Заработать 1000 C$",1000,300]];
+const BOATS=[["Деревянная лодка",2500,1.05],["Скоростной катер",25000,1.2],["Золотая яхта",250000,1.5]];
+const BAITS=[["Обычная наживка",100,1.05],["Редкая наживка",1000,1.2],["Мифическая наживка",10000,1.5]];
+const WEATHER=["☀️ Ясно","🌧️ Дождь","🌫️ Туман","⛈️ Гроза","🌌 Северное сияние"];
+const ENCHANTS=[["Нет",1,1],["Удача",1.25,1],["Скорость",1,1.2],["Изобилие",1.15,1.1]];
+const todayKey=()=>new Date().toISOString().slice(0,10);
+let save=JSON.parse(localStorage.getItem("fischClicker13")||"null")||{};
+const defaults={money:0,level:1,xp:0,caught:0,island:"Moosewood",unlocked:["Moosewood"],fish:[],bots:[],rod:0,ownedRods:[0],mutationsCaught:{},prestige:0,boat:0,bait:0,baitCount:0,enchant:0,weather:0,questDate:"",questProgress:[0,0,0],questClaimed:[],earned:0,botTimers:{}};
+save={...defaults,...save};
+for(const k of ["unlocked","fish","bots","ownedRods"]) if(!Array.isArray(save[k]))save[k]=defaults[k].slice();
+save.money=Number(save.money)||0;save.level=Math.max(1,Math.min(500,Number(save.level)||1));save.xp=Math.max(0,Number(save.xp)||0);
+save.fish=Array.isArray(save.fish)?save.fish:[];save.mutationsCaught=save.mutationsCaught||{};
+function saveIt(){localStorage.setItem("fischClicker13",JSON.stringify(save))}
+function xpNeeded(l){return Math.floor(60+15*l+2*Math.pow(l,1.25))}
+function addXP(n){if(save.level>=500)return;save.xp+=Math.floor(n*(ENCHANTS[save.enchant||0][2]||1));while(save.level<500&&save.xp>=xpNeeded(save.level)){save.xp-=xpNeeded(save.level);save.level++}if(save.level>=500)save.xp=0}
+function show(id){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id))}
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>show(b.dataset.page)));
+function rollMutation(){let r=Math.random()*100,a=0;for(const m of mutations){a+=m[2];if(r<a)return {name:m[0],mult:m[1]}}return {name:"Normal",mult:1}}
+function currentWeather(){return WEATHER[save.weather%WEATHER.length]}
+function fish(){
+ let pool=fishData.filter(f=>f[1]===save.island&&f[3]<=save.level);
+ if(!pool.length)pool=fishData.filter(f=>f[1]==="Moosewood");
+ let boss=null;
+ if(save.island==="Ancient Isle"&&save.megaActiveUntil>Date.now()&&!save.megaCaught){boss=["Megalodon","Ancient Isle",10000,35,"Secret"];pool.push(boss)}
+ const f=pool[Math.floor(Math.random()*pool.length)],m=rollMutation(),rarity=rarityInfo[f[4]]||rarityInfo.Common;
+ const wmult=[1,1.1,1.2,1.25,1.5][save.weather%5],boat=BOATS[save.boat][2],bait=save.baitCount>0?BAITS[save.bait][2]:1,enchant=ENCHANTS[save.enchant][1];
+ const value=Math.floor(f[2]*rods[save.rod][3]*rarity.value*m.mult*wmult*boat*bait*enchant*(1+(save.prestige||0)*0.1));
+ save.money+=value;save.earned+=value;save.caught++;addXP(rarity.xp);
+ if(!save.fish.includes(f[0]))save.fish.push(f[0]);
+ save.mutationsCaught[m.name]=(save.mutationsCaught[m.name]||0)+1;
+ if(save.baitCount>0)save.baitCount--;
+ if(f[0]==="Megalodon")save.megaCaught=true;
+ updateQuest(f, value);saveIt();render();
+ document.getElementById("result").textContent=`${m.name==="Normal"?"":m.name+" "}${f[0]} [${f[4]}] • +${value} C$ • +${rarity.xp} XP`;
+}
+function renderXP(){let n=xpNeeded(save.level);document.getElementById("xpText").textContent=save.level>=500?"MAX • уровень 500":`${Math.floor(save.xp)} / ${n} XP`;document.getElementById("xpBar").style.width=(save.level>=500?100:Math.min(100,save.xp/n*100))+"%"}
+function renderIslands(){document.getElementById("islandGrid").innerHTML=islands.map(x=>`<div class="item"><h3>🏝️ ${x[0]}</h3><p>${x[2]}</p><p>Уровень ${x[1]}</p><button class="action" ${save.level<x[1]?"disabled":""} onclick="travel(${JSON.stringify(x[0])})">${save.island===x[0]?"Здесь":"Плыть"}</button></div>`).join("")}
+function travel(n){let p=islands.find(x=>x[0]===n);if(p&&save.level>=p[1]){save.island=n;if(!save.unlocked.includes(n))save.unlocked.push(n);saveIt();render();show("fish")}}
+function renderRods(){document.getElementById("rodGrid").innerHTML=rods.map((r,i)=>`<div class="item"><h3>🎣 ${r[0]}</h3><p>Ур. ${r[1]} • ${r[2]} C$ • ×${r[3]}</p><button class="action" ${save.ownedRods.includes(i)? "":"disabled"} onclick="equipRod(${i})">${save.rod===i?"Экипирована":"Экипировать"}</button><button class="action" ${save.ownedRods.includes(i)||save.level<r[1]||save.money<r[2]?"disabled":""} onclick="buyRod(${i})">Купить</button></div>`).join("")}
+function buyRod(i){let r=rods[i];if(save.money>=r[2]&&save.level>=r[1]&&!save.ownedRods.includes(i)){save.money-=r[2];save.ownedRods.push(i);save.rod=i;saveIt();render()}}
+function equipRod(i){if(save.ownedRods.includes(i)){save.rod=i;saveIt();render()}}
+function renderBots(){document.getElementById("botGrid").innerHTML=bots.map((b,i)=>`<div class="card"><h3>🤖 ${b[0]}</h3><p>${b[1]} C$ • каждые ${b[2]} сек. • +${b[3]} C$</p><button class="action" ${save.bots.includes(i)||save.money<b[1]?"disabled":""} onclick="buyBot(${i})">${save.bots.includes(i)?"Куплен":"Купить"}</button></div>`).join("")}
+function buyBot(i){let b=bots[i];if(save.money>=b[1]&&!save.bots.includes(i)){save.money-=b[1];save.bots.push(i);save.botTimers[i]=0;saveIt();render()}}
+function renderFish(){let total=fishData.length,found=fishData.filter(f=>save.fish.includes(f[0])).length;document.getElementById("collectionProgress").textContent=`Коллекция: ${found}/${total} (${Math.floor(found/total*100)}%)`;document.getElementById("fishGrid").innerHTML=islands.map(p=>{let list=fishData.filter(f=>f[1]===p[0]);let n=list.filter(f=>save.fish.includes(f[0])).length;return `<div class="card" style="grid-column:1/-1"><h3>${p[0]} — ${n}/${list.length}</h3><div class="progress"><i style="width:${n/list.length*100}%"></i></div><div class="grid">${list.map(f=>`<div class="item ${save.fish.includes(f[0])?"":"locked"}"><h3>${save.fish.includes(f[0])?"🐟":"❔"} ${save.fish.includes(f[0])?f[0]:"Неизвестная рыба"}</h3><p>${f[4]} • ${f[2]} C$</p></div>`).join("")}</div></div>`}).join("")}
+function renderMutations(){document.getElementById("mutationGrid").innerHTML=mutations.map(m=>`<div class="item"><h3>✨ ${m[0]}</h3><p>×${m[1]} • шанс ${m[2]}%</p><p class="small">Поймано: ${save.mutationsCaught[m[0]]||0}</p></div>`).join("");document.getElementById("rarityGrid").innerHTML=rarityNames.map(r=>`<div class="item"><h3>💎 ${r}</h3><p>×${rarityInfo[r].value} к цене</p><p>+${rarityInfo[r].xp} XP</p></div>`).join("")}
+function renderBadges(){document.getElementById("badgeGrid").innerHTML=badges.map(b=>{let ok=b[0]==="Исследователь"?save.unlocked.length>=b[1]:b[0]==="Коллекционер"?save.fish.length>=b[1]:save.caught>=b[1];return `<div class="card">${ok?"🏆":"🔒"} ${b[0]}</div>`}).join("")}
+function renderWeather(){document.getElementById("weatherCard").innerHTML=`<h3>${currentWeather()}</h3><p>Погода меняется каждые 3 минуты и влияет на награду за улов.</p><p>Текущий бонус: ×${[1,1.1,1.2,1.25,1.5][save.weather%5]}</p>`}
+function renderEnchant(){document.getElementById("enchantCard").innerHTML=ENCHANTS.map((e,i)=>`<div class="item"><h3>🔮 ${e[0]}</h3><p>Бонус к цене ×${e[1]} • XP ×${e[2]}</p><button class="action" ${save.enchant===i?"disabled":save.money<5000?"disabled":""} onclick="setEnchant(${i})">${save.enchant===i?"Выбрано":"Установить • 5000 C$"}</button></div>`).join("")}
+function setEnchant(i){if(save.money>=5000){save.money-=5000;save.enchant=i;saveIt();render()}}
+function resetDaily(){if(save.questDate!==todayKey()){save.questDate=todayKey();save.questProgress=[0,0,0];save.questClaimed=[]}}
+function updateQuest(f,value){resetDaily();save.questProgress[0]++;if(rarityInfo[f[4]].xp>=60)save.questProgress[1]++;save.questProgress[2]+=value}
+function claimQuest(i){resetDaily();let q=QUESTS[i];if(save.questProgress[i]>=q[1]&&!save.questClaimed.includes(i)){save.questClaimed.push(i);save.money+=q[2];saveIt();render()}}
+function renderQuests(){resetDaily();document.getElementById("questGrid").innerHTML=QUESTS.map((q,i)=>`<div class="item"><h3>📜 ${q[0]}</h3><p>${Math.min(save.questProgress[i],q[1])}/${q[1]}</p><p>Награда: ${q[2]} C$</p><button class="action" ${save.questProgress[i]<q[1]||save.questClaimed.includes(i)?"disabled":""} onclick="claimQuest(${i})">${save.questClaimed.includes(i)?"Получено":"Забрать"}</button></div>`).join("")}
+function renderBoats(){document.getElementById("boatGrid").innerHTML=BOATS.map((b,i)=>`<div class="item"><h3>🚤 ${b[0]}</h3><p>Цена ${b[1]} C$ • бонус ×${b[2]}</p><button class="action" ${save.boat>=i?"disabled":save.money<b[1]?"disabled":""} onclick="buyBoat(${i})">${save.boat===i?"Активна":save.boat>i?"Куплена":"Купить"}</button></div>`).join("")}
+function buyBoat(i){let b=BOATS[i];if(save.money>=b[1]&&i>save.boat){save.money-=b[1];save.boat=i;saveIt();render()}}
+function renderBait(){document.getElementById("baitGrid").innerHTML=BAITS.map((b,i)=>`<div class="item"><h3>🪱 ${b[0]}</h3><p>${b[1]} C$ • бонус ×${b[2]}</p><button class="action" ${save.money<b[1]?"disabled":""} onclick="buyBait(${i})">Купить 5</button></div>`).join("")+`<p class="card">В запасе: ${save.baitCount} наживок</p>`}
+function buyBait(i){let b=BAITS[i];if(save.money>=b[1]){save.money-=b[1];save.bait=i;save.baitCount+=5;saveIt();render()}}
+function renderEvents(){let active=save.megaActiveUntil>Date.now();document.getElementById("eventCard").innerHTML=`<h3>🦈 Мегалодон</h3><p>${active&&!save.megaCaught?"Событие активно! Один Мегалодон доступен на Ancient Isle.":"Следующее появление по таймеру. Один босс за событие."}</p><p>Также встречаются редкие рыбы-боссы в коллекции.</p>`}
+function renderPrestige(){document.getElementById("prestigeCard").innerHTML=`<h3>Текущий престиж: ${save.prestige}</h3><p>Доступен после достижения 500 уровня. Престиж сбрасывает уровень, деньги, удочки и островной прогресс, но сохраняет коллекцию и даёт постоянный бонус дохода.</p><button class="action" ${save.level<500?"disabled":""} onclick="doPrestige()">Получить престиж</button>`}
+function doPrestige(){if(save.level>=500&&confirm("Начать престиж? Уровень, деньги, удочки и открытые острова будут сброшены. Коллекция сохранится.")){save.prestige++;save.level=1;save.xp=0;save.money=0;save.island="Moosewood";save.unlocked=["Moosewood"];save.rod=0;save.ownedRods=[0];save.bots=[];saveIt();render()}}
+function render(){
+ document.getElementById("money").textContent=Math.floor(save.money);document.getElementById("level").textContent=save.level;document.getElementById("caught").textContent=save.caught;
+ let place=islands.find(x=>x[0]===save.island)||islands[0];document.getElementById("placeTitle").textContent=place[0];document.getElementById("placeDesc").textContent=place[2];
+ document.getElementById("weatherLine").textContent="Погода: "+currentWeather();document.getElementById("baitLine").textContent="Наживка: "+(save.baitCount?BAITS[save.bait][0]+" ("+save.baitCount+")":"нет");
+ renderXP();renderIslands();renderRods();renderBots();renderFish();renderMutations();renderBadges();renderWeather();renderEnchant();renderQuests();renderBoats();renderBait();renderEvents();renderPrestige();renderMega();
+}
+function renderMega(){let box=document.getElementById("megaNotice");let active=save.megaActiveUntil>Date.now()&&!save.megaCaught;box.style.display=active?"block":"none";if(active)document.getElementById("megaTimer").textContent="Осталось "+Math.ceil((save.megaActiveUntil-Date.now())/1000)+" сек. • Ancient Isle";}
+function megaLoop(){let now=Date.now();if(!save.nextMegaAt)save.nextMegaAt=now+120000;if(now>=save.nextMegaAt){save.megaActiveUntil=now+120000;save.nextMegaAt=now+120000;save.megaCaught=false;document.getElementById("result").textContent="🦈 МЕГАЛОДОН ПОЯВИЛСЯ! Один на 2 минуты."}if(now>=save.megaActiveUntil)save.megaActiveUntil=0}
+function tick(){
+ megaLoop();
+ if(Date.now()>=Number(save.nextWeatherAt||0)){save.weather=(save.weather+1)%WEATHER.length;save.nextWeatherAt=Date.now()+180000}
+ save.bots.forEach(i=>{let b=bots[i];if(!b)return;save.botTimers[i]=(save.botTimers[i]||0)+1;if(save.botTimers[i]>=b[2]){save.botTimers[i]=0;save.money+=b[3]*(1+save.prestige*.1);save.caught++;addXP(20)}});
+ saveIt();render();
+}
+resetDaily();if(!save.nextWeatherAt)save.nextWeatherAt=Date.now()+180000;
+if(!save.nextMegaAt)save.nextMegaAt=Date.now()+120000;
+save.level=Math.min(500,Math.max(1,save.level));save.xp=Number(save.xp)||0;
+render();show("fish");setInterval(tick,1000);
+</script>
+</body></html>
