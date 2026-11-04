@@ -19,7 +19,7 @@ def webhook():
     chat_id = message.get("chat", {}).get("id")
     text = message.get("text", "")
 
-    if chat_id and text.split()[0] == "/start":
+    if chat_id and text.split() and text.split()[0] == "/start":
         requests.post(f"{API}/sendMessage", json={
             "chat_id": chat_id,
             "text": "🎣 Добро пожаловать в Fisch Clicker!",
@@ -32,3 +32,11 @@ def webhook():
         })
 
     return {"ok": True}
+
+render_url = os.environ.get("RENDER_EXTERNAL_URL")
+if render_url:
+    requests.post(
+        f"{API}/setWebhook",
+        json={"url": f"{render_url}/webhook"},
+        timeout=10
+        )
